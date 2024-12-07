@@ -1,0 +1,100 @@
+# version: '2'
+services:  
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - debezium-network
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      # KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      # KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+    networks:
+      - debezium-network
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:4.0.3-SNAPSHOT
+    restart: "no"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      # JVM_OPTS: "-Xms16M -Xmx512M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    ports:
+      - 9000:9000
+    depends_on:
+      - kafka
+    networks:
+      - debezium-network
+
+  postgres:
+    image: quay.io/debezium/example-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory
+    ports:
+      - "5432:5432"
+    networks:
+      - debezium-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    # command: ["postgres", "-c", "wal_level=logical"]
+    command: ["postgres", "-c", "wal_level=logical", "-c", "shared_preload_libraries=pgoutput"]
+
+  
+  # mysql:
+  #   image: quay.io/debezium/example-mysql
+  #   ports:
+  #    - 3306:3306
+  #   environment:
+  #    - MYSQL_ROOT_PASSWORD=debezium
+  #    - MYSQL_USER=mysqluser
+  #    - MYSQL_PASSWORD=mysqlpw
+  #   networks:
+  #     - debezium-network
+  connect:
+    image: quay.io/debezium/connect
+    ports:
+     - 8083:8083
+    links:
+     - kafka
+     - postgres
+    environment:
+      GROUP_ID: 1
+      BOOTSTRAP_SERVERS: "kafka:29092"
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+      CONNECT_BOOTSTRAP_SERVERS: "kafka:29092"
+      REST_HOST_NAME: 0.0.0.0
+      CONNECT_REST_PORT: 8083
+      # CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      # CONNECT_VALUE_CONVERTER: io.debezium.connector.postgresql.PostgresConnector
+    networks:
+      - debezium-network
+
+networks:
+  debezium-network:
+    driver: bridge
+volumes:
+  postgres-data:
