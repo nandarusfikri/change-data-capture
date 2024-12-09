@@ -45,6 +45,18 @@ services:
       - kafka
     networks:
       - debezium-network
+  
+  debezium-ui:
+    image: quay.io/debezium/debezium-ui:2.1.2.Final
+    environment:
+      DEBEZIUM_UI_API_URL: http://192.168.55.104:8083
+      KAFKA_CONNECT_URIS: http://connect:8083
+    links:
+     - connect
+    ports:
+      - "8080:8080"
+    networks:
+      - debezium-network
 
   postgres:
     image: quay.io/debezium/example-postgres
