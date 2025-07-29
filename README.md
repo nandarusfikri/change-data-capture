@@ -38,3 +38,31 @@
 }
 
 http://localhost:8083/connectors/source_postgres/config
+
+Database: sales
+🔹 Table: orders
+
+CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  customer_name VARCHAR(100),
+  product VARCHAR(100),
+  quantity INT,
+  order_date TIMESTAMP DEFAULT NOW()
+);
+
+
+
+Database: warehouse
+🔹 Table: inventory
+
+
+CREATE TABLE inventory (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_name VARCHAR(100),
+  stock INT,
+  last_updated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+
+
