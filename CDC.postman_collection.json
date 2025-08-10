@@ -1,0 +1,76 @@
+{
+	"info": {
+		"_postman_id": "6caba722-2706-42a8-abc6-9ed8478d1276",
+		"name": "CDC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45010555"
+	},
+	"item": [
+		{
+			"name": "Sink",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"connector.class\": \"io.debezium.connector.jdbc.JdbcSinkConnector\",\r\n  \"tasks.max\": \"1\",\r\n  \"topics\": \"sfs.public.orders\",\r\n  \"connection.url\": \"jdbc:mariadb://mariadb:3306/warehouse\",\r\n  \"connection.username\": \"root\",\r\n  \"connection.password\": \"nanda\",\r\n  \"insert.mode\": \"upsert\",\r\n  \"delete.enabled\": \"false\",\r\n  \"primary.key.mode\": \"record_value\",\r\n  \"primary.key.fields\": \"id\",\r\n  \"auto.create.tables\": \"true\",\r\n  \"auto.evolve.tables\": \"true\",\r\n  \"table.name.format\": \"inventory\",\r\n  \"schema.evolution\": \"basic\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/connectors/mariadb-sink/config",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						"mariadb-sink",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Capture Source",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"connector.class\": \"io.debezium.connector.postgresql.PostgresConnector\",\r\n    \"tasks.max\": \"1\",\r\n    \"plugin.name\": \"pgoutput\",\r\n    \"database.hostname\": \"postgres\",\r\n    \"database.port\": \"5432\",\r\n    \"database.user\": \"postgres\",\r\n    \"database.password\": \"postgres\",\r\n    \"database.dbname\": \"sales\",\r\n    \"database.server.name\": \"sfs_server\",\r\n    \"schema.include.list\": \"public\",\r\n    \"table.include.list\": \"public.orders\",\r\n    \"slot.name\": \"debezium_slot\",\r\n    \"topic.prefix\": \"sfs\",\r\n    \"topic.naming.strategy\": \"io.debezium.schema.SchemaTopicNamingStrategy\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8083/connectors/source_postgres/config",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8083",
+					"path": [
+						"connectors",
+						"source_postgres",
+						"config"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
